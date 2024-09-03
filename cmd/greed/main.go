@@ -24,18 +24,16 @@ func main() {
 		Usage: "A CLI client for Feedbin",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     "username",
-				Aliases:  []string{"u"},
-				EnvVars:  []string{"FEEDBIN_USERNAME"},
-				Usage:    "Feedbin username",
-				Required: true,
+				Name:    "username",
+				Aliases: []string{"u"},
+				EnvVars: []string{"FEEDBIN_USERNAME"},
+				Usage:   "Feedbin username",
 			},
 			&cli.StringFlag{
-				Name:     "password",
-				Aliases:  []string{"P"},
-				EnvVars:  []string{"FEEDBIN_PASSWORD"},
-				Usage:    "Feedbin password",
-				Required: true,
+				Name:    "password",
+				Aliases: []string{"P"},
+				EnvVars: []string{"FEEDBIN_PASSWORD"},
+				Usage:   "Feedbin password",
 			},
 			&cli.IntFlag{
 				Name:    "fetch-limit",
@@ -116,6 +114,11 @@ func main() {
 func run(c *cli.Context) error {
 	username := c.String("username")
 	password := c.String("password")
+
+	if username == "" || password == "" {
+		return fmt.Errorf("username and password are required")
+	}
+
 	fetchLimit := c.Int("fetch-limit")
 	displayLimit := c.Int("display-limit")
 	cacheDir := c.String("cache-dir")
@@ -142,6 +145,11 @@ func run(c *cli.Context) error {
 func fetchAndUpdateCache(c *cli.Context) error {
 	username := c.String("username")
 	password := c.String("password")
+
+	if username == "" || password == "" {
+		return fmt.Errorf("username and password are required")
+	}
+
 	fetchLimit := c.Int("fetch-limit")
 	cacheDir := c.String("cache-dir")
 	showProgress := c.Bool("show-progress")
