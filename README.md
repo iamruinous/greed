@@ -13,3 +13,7 @@ An experiment to use Cursor and AI to write a CLI client for Feedbin.
 ## Installation
 
 To install Greed, make sure you have Go installed on your system, then run:
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

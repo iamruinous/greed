@@ -24,7 +24,7 @@ func New(cacheDir string) (*Cache, error) {
 	}
 
 	cacheFile := filepath.Join(cacheDir, "feedbin_cache.json")
-	if err := os.MkdirAll(filepath.Dir(cacheFile), 0755); err != nil {
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create cache directory: %w", err)
 	}
 

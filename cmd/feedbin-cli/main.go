@@ -34,14 +34,14 @@ func main() {
 			&cli.IntFlag{
 				Name:    "fetch-limit",
 				Aliases: []string{"l"},
-				EnvVars: []string{"FEEDBIN_ENTRY_LIMIT"},
+				EnvVars: []string{"GREED_FETCH_LIMIT"},
 				Usage:   "Number of entries to fetch",
-				Value:   5,
+				Value:   20,
 			},
 			&cli.IntFlag{
 				Name:    "display-limit",
 				Aliases: []string{"d"},
-				EnvVars: []string{"FEEDBIN_DISPLAY_LIMIT"},
+				EnvVars: []string{"GREED_DISPLAY_LIMIT"},
 				Usage:   "Number of entries to display",
 				Value:   5,
 			},
@@ -57,6 +57,13 @@ func main() {
 					}
 					return filepath.Join(cacheDir, "greed")
 				}(),
+			},
+			&cli.BoolFlag{
+				Name:    "random",
+				Aliases: []string{"r"},
+				EnvVars: []string{"GREED_RANDOM"},
+				Usage:   "Display random entries",
+				Value:   false,
 			},
 		},
 		Action: run,
@@ -87,6 +94,7 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	ui.DisplayEntries(entries, displayLimit)
+	randomEntries := c.Bool("random")
+	ui.DisplayEntries(entries, displayLimit, randomEntries)
 	return nil
 }

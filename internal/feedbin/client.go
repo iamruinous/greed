@@ -13,6 +13,7 @@ type Client struct {
 	username   string
 	password   string
 	limit      int
+	BaseURL    string
 }
 
 type Entry struct {
@@ -33,12 +34,13 @@ func NewClient(username, password string, limit int) *Client {
 		username:   username,
 		password:   password,
 		limit:      limit,
+		BaseURL:    "https://api.feedbin.com/v2",
 	}
 }
 
-func (c *Client) GetLatestFeeds() ([]Entry, error) {
+func (c *Client) GetLatestEntries() ([]Entry, error) {
 	// Create a new request for the entries API
-	req, err := http.NewRequest("GET", "https://api.feedbin.com/v2/entries.json", nil)
+	req, err := http.NewRequest("GET", c.BaseURL+"/entries.json", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
