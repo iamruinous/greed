@@ -9,27 +9,32 @@ import (
 )
 
 func FetchEntries(client *feedbin.Client, cache *cache.Cache) ([]feedbin.Entry, error) {
+	spinner, _ := pterm.DefaultSpinner.Start("Fetching entries...")
+
 	if cachedEntries, ok := cache.Get(); ok {
+		spinner.Success("Entries fetched from cache")
 		return cachedEntries, nil
 	}
 
 	entries, err := client.GetLatestEntries()
 	if err != nil {
+		spinner.Fail("Failed to fetch entries")
 		return nil, err
 	}
 
 	cache.Set(entries)
+	spinner.Success("Entries fetched successfully")
 	return entries, nil
 }
 
 func DisplayEntries(entries []feedbin.Entry, displayLimit int, randomEntries bool) {
-	pterm.DefaultHeader.WithFullWidth().Println("Feedbin Latest Feeds")
-
 	if randomEntries {
 		rand.Shuffle(len(entries), func(i, j int) {
 			entries[i], entries[j] = entries[j], entries[i]
 		})
 	}
+
+	pterm.DefaultHeader.WithFullWidth().Println("Feedbin Latest Feeds")
 
 	displayCount := min(displayLimit, len(entries))
 	for _, entry := range entries[:displayCount] {
