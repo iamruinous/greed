@@ -6,35 +6,22 @@ on:
       - 'v*'
 
 jobs:
-  release:
+  goreleaser:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '>=1.22'
-    - name: Build
-      run: |
-        GOOS=linux GOARCH=amd64 go build -o feedbin-cli-linux-amd64 ./cmd/feedbin-cli
-        GOOS=darwin GOARCH=amd64 go build -o feedbin-cli-darwin-amd64 ./cmd/feedbin-cli
-        GOOS=windows GOARCH=amd64 go build -o feedbin-cli-windows-amd64.exe ./cmd/feedbin-cli
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        files: |
-          feedbin-cli-linux-amd64
-          feedbin-cli-darwin-amd64
-          feedbin-cli-windows-amd64.exe
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.22'
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
