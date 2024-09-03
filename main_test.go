@@ -52,7 +52,7 @@ func TestFeedbinClient(t *testing.T) {
 	client := feedbin.NewClient("testuser", "testpass", 5)
 	client.BaseURL = server.URL
 
-	cache, err := cache.New(tempDir)
+	cache, err := cache.New(tempDir, time.Minute*5)
 	if err != nil {
 		t.Fatalf("Error creating cache: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestCache(t *testing.T) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	cache, err := cache.New(tempDir)
+	cache, err := cache.New(tempDir, time.Minute*5)
 	if err != nil {
 		t.Fatalf("Error creating cache: %v", err)
 	}
