@@ -8,17 +8,19 @@ import (
 	"github.com/pterm/pterm"
 )
 
-func FetchEntries(client *feedbin.Client, cache *cache.Cache, showProgress bool) ([]feedbin.Entry, error) {
+func FetchEntries(client *feedbin.Client, cache *cache.Cache, showProgress, ignoreCache bool) ([]feedbin.Entry, error) {
 	var spinner *pterm.SpinnerPrinter
 	if showProgress {
 		spinner, _ = pterm.DefaultSpinner.Start("Fetching entries...")
 	}
 
-	if cachedEntries, ok := cache.Get(); ok {
-		if showProgress {
-			spinner.Success("Entries fetched from cache")
+	if !ignoreCache {
+		if cachedEntries, ok := cache.Get(); ok {
+			if showProgress {
+				spinner.Success("Entries fetched from cache")
+			}
+			return cachedEntries, nil
 		}
-		return cachedEntries, nil
 	}
 
 	entries, err := client.GetLatestEntries()
