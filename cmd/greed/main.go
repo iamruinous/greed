@@ -12,6 +12,12 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var (
+	Version = "dev"
+	Commit  = "none"
+	Date    = "unknown"
+)
+
 func main() {
 	app := &cli.App{
 		Name:  "feedbin-cli",
@@ -93,6 +99,11 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:   "version",
+				Usage:  "Print the version information",
+				Action: printVersion,
+			},
 		},
 	}
 
@@ -148,5 +159,12 @@ func fetchAndUpdateCache(c *cli.Context) error {
 	}
 
 	cache.Set(entries)
+	return nil
+}
+
+func printVersion(c *cli.Context) error {
+	fmt.Printf("Greed version %s\n", Version)
+	fmt.Printf("Commit: %s\n", Commit)
+	fmt.Printf("Built: %s\n", Date)
 	return nil
 }
