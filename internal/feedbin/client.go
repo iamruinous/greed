@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -11,6 +12,7 @@ type Client struct {
 	httpClient *http.Client
 	username   string
 	password   string
+	limit      int
 }
 
 type Entry struct {
@@ -25,11 +27,12 @@ type Entry struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func NewClient(username, password string) *Client {
+func NewClient(username, password string, limit int) *Client {
 	return &Client{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
 		username:   username,
 		password:   password,
+		limit:      limit,
 	}
 }
 
@@ -42,8 +45,8 @@ func (c *Client) GetLatestFeeds() ([]Entry, error) {
 
 	// Add query parameters for pagination and sorting
 	q := req.URL.Query()
-	q.Add("per_page", "15") // Adjust the number of entries as needed
-	q.Add("order", "desc")  // Get the latest entries first
+	q.Add("per_page", strconv.Itoa(c.limit)) // Adjust the number of entries as needed
+	q.Add("order", "desc")                   // Get the latest entries first
 	req.URL.RawQuery = q.Encode()
 
 	// Add Basic Authentication
