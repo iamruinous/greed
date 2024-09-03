@@ -12,7 +12,7 @@ builds:
       - amd64
       - arm64
     main: ./cmd/greed
-    ldflags: -s -w -X github.com/iamruinous/greed/cmd/greed/version.Version={{.Tag}}
+    ldflags: -s -w -X main.Version={{.Version}} -X main.Commit={{.Commit}} -X main.Date={{.Date}}
 archives:
   - format: tar.gz
     name_template: >-
