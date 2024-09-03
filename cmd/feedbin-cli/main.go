@@ -26,7 +26,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:     "password",
-				Aliases:  []string{"p"},
+				Aliases:  []string{"P"},
 				EnvVars:  []string{"FEEDBIN_PASSWORD"},
 				Usage:    "Feedbin password",
 				Required: true,
@@ -65,6 +65,13 @@ func main() {
 				Usage:   "Display random entries",
 				Value:   false,
 			},
+			&cli.BoolFlag{
+				Name:    "show-progress",
+				Aliases: []string{"p"},
+				EnvVars: []string{"GREED_SHOW_PROGRESS"},
+				Usage:   "Show progress spinner",
+				Value:   false,
+			},
 		},
 		Action: run,
 	}
@@ -81,6 +88,7 @@ func run(c *cli.Context) error {
 	fetchLimit := c.Int("fetch-limit")
 	displayLimit := c.Int("display-limit")
 	cacheDir := c.String("cache-dir")
+	showProgress := c.Bool("show-progress")
 
 	client := feedbin.NewClient(username, password, fetchLimit)
 
@@ -89,7 +97,7 @@ func run(c *cli.Context) error {
 		return fmt.Errorf("failed to create cache: %w", err)
 	}
 
-	entries, err := ui.FetchEntries(client, cache)
+	entries, err := ui.FetchEntries(client, cache, showProgress)
 	if err != nil {
 		return err
 	}

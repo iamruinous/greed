@@ -57,7 +57,7 @@ func TestFeedbinClient(t *testing.T) {
 		t.Fatalf("Error creating cache: %v", err)
 	}
 
-	entries, err := ui.FetchEntries(client, cache)
+	entries, err := ui.FetchEntries(client, cache, false)
 	if err != nil {
 		t.Fatalf("Error getting latest feeds: %v", err)
 	}
