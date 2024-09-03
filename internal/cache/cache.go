@@ -12,13 +12,14 @@ import (
 )
 
 type Cache struct {
-	entries  []feedbin.Entry
-	mu       sync.RWMutex
-	exp      time.Time
-	filePath string
+	entries     []feedbin.Entry
+	mu          sync.RWMutex
+	exp         time.Time
+	filePath    string
+	expDuration time.Duration // Add this line
 }
 
-func New(cacheDir string) (*Cache, error) {
+func New(cacheDir string, expDuration time.Duration) (*Cache, error) {
 	if cacheDir == "" {
 		return nil, fmt.Errorf("cache directory is not set")
 	}
@@ -29,7 +30,8 @@ func New(cacheDir string) (*Cache, error) {
 	}
 
 	return &Cache{
-		filePath: cacheFile,
+		filePath:    cacheFile,
+		expDuration: expDuration, // Add this line
 	}, nil
 }
 
@@ -38,7 +40,7 @@ func (c *Cache) Set(entries []feedbin.Entry) error {
 	defer c.mu.Unlock()
 
 	c.entries = entries
-	c.exp = time.Now().Add(5 * time.Minute)
+	c.exp = time.Now().Add(c.expDuration) // Use the custom expiration duration
 
 	data, err := json.Marshal(struct {
 		Entries []feedbin.Entry `json:"entries"`

@@ -12,7 +12,7 @@ type Client struct {
 	httpClient *http.Client
 	username   string
 	password   string
-	limit      int
+	limit      int64
 	BaseURL    string
 }
 
@@ -28,7 +28,7 @@ type Entry struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func NewClient(username, password string, limit int) *Client {
+func NewClient(username, password string, limit int64) *Client {
 	return &Client{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
 		username:   username,
@@ -47,8 +47,8 @@ func (c *Client) GetLatestEntries() ([]Entry, error) {
 
 	// Add query parameters for pagination and sorting
 	q := req.URL.Query()
-	q.Add("per_page", strconv.Itoa(c.limit)) // Adjust the number of entries as needed
-	q.Add("order", "desc")                   // Get the latest entries first
+	q.Add("per_page", strconv.FormatInt(c.limit, 10)) // Convert int64 to string
+	q.Add("order", "desc")                            // Get the latest entries first
 	req.URL.RawQuery = q.Encode()
 
 	// Add Basic Authentication

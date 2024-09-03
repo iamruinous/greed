@@ -38,7 +38,7 @@ func FetchEntries(client *feedbin.Client, cache *cache.Cache, showProgress, igno
 	return entries, nil
 }
 
-func DisplayEntries(entries []feedbin.Entry, displayLimit int, randomEntries bool) {
+func DisplayEntries(entries []feedbin.Entry, displayLimit int64, randomEntries bool) {
 	if randomEntries {
 		rand.Shuffle(len(entries), func(i, j int) {
 			entries[i], entries[j] = entries[j], entries[i]
@@ -47,7 +47,7 @@ func DisplayEntries(entries []feedbin.Entry, displayLimit int, randomEntries boo
 
 	pterm.DefaultHeader.WithFullWidth().Println("Feedbin Latest Feeds")
 
-	displayCount := min(displayLimit, len(entries))
+	displayCount := min(displayLimit, int64(len(entries)))
 	for _, entry := range entries[:displayCount] {
 		pterm.DefaultSection.Println(entry.Title)
 		pterm.Info.Printf("Author: %s\n", entry.Author)
@@ -60,7 +60,7 @@ func DisplayEntries(entries []feedbin.Entry, displayLimit int, randomEntries boo
 	pterm.DefaultBasicText.Println("Press Ctrl+C to quit")
 }
 
-func min(a, b int) int {
+func min(a, b int64) int64 {
 	if a < b {
 		return a
 	}

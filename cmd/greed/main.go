@@ -1,15 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/iamruinous/greed/internal/cache"
 	"github.com/iamruinous/greed/internal/feedbin"
 	"github.com/iamruinous/greed/internal/ui"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 var (
@@ -19,33 +21,35 @@ var (
 )
 
 func main() {
-	app := &cli.App{
-		Name:  "feedbin-cli",
-		Usage: "A CLI client for Feedbin",
+	app := &cli.Command{
+		Name:                  "feedbin-cli",
+		Usage:                 "A CLI client for Feedbin",
+		EnableShellCompletion: true,
+		Suggest:               true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "username",
 				Aliases: []string{"u"},
-				EnvVars: []string{"FEEDBIN_USERNAME"},
+				Sources: cli.EnvVars("FEEDBIN_USERNAME"),
 				Usage:   "Feedbin username",
 			},
 			&cli.StringFlag{
 				Name:    "password",
 				Aliases: []string{"P"},
-				EnvVars: []string{"FEEDBIN_PASSWORD"},
+				Sources: cli.EnvVars("FEEDBIN_PASSWORD"),
 				Usage:   "Feedbin password",
 			},
 			&cli.IntFlag{
 				Name:    "fetch-limit",
 				Aliases: []string{"l"},
-				EnvVars: []string{"GREED_FETCH_LIMIT"},
+				Sources: cli.EnvVars("GREED_FETCH_LIMIT"),
 				Usage:   "Number of entries to fetch",
 				Value:   20,
 			},
 			&cli.StringFlag{
 				Name:    "cache-dir",
 				Aliases: []string{"c"},
-				EnvVars: []string{"GREED_CACHE_DIR"},
+				Sources: cli.EnvVars("GREED_CACHE_DIR"),
 				Usage:   "Cache directory",
 				Value: func() string {
 					cacheDir, err := os.UserCacheDir()
@@ -56,16 +60,9 @@ func main() {
 				}(),
 			},
 			&cli.BoolFlag{
-				Name:    "random",
-				Aliases: []string{"r"},
-				EnvVars: []string{"GREED_RANDOM"},
-				Usage:   "Display random entries",
-				Value:   false,
-			},
-			&cli.BoolFlag{
 				Name:    "show-progress",
 				Aliases: []string{"p"},
-				EnvVars: []string{"GREED_SHOW_PROGRESS"},
+				Sources: cli.EnvVars("GREED_SHOW_PROGRESS"),
 				Usage:   "Show progress spinner",
 				Value:   false,
 			},
@@ -79,20 +76,34 @@ func main() {
 			{
 				Name:   "list",
 				Usage:  "List latest entries",
-				Action: run,
+				Action: listEntries,
 				Flags: []cli.Flag{
+					&cli.DurationFlag{
+						Name:    "cache-expires-after",
+						Aliases: []string{"e"},
+						Sources: cli.EnvVars("GREED_CACHE_EXPIRES_AFTER"),
+						Usage:   "Cache expiration duration",
+						Value:   time.Minute * 5,
+					},
 					&cli.IntFlag{
 						Name:    "display-limit",
 						Aliases: []string{"d"},
-						EnvVars: []string{"GREED_DISPLAY_LIMIT"},
+						Sources: cli.EnvVars("GREED_DISPLAY_LIMIT"),
 						Usage:   "Number of entries to display",
 						Value:   5,
 					},
 					&cli.BoolFlag{
 						Name:    "ignore-cache",
 						Aliases: []string{"i"},
-						EnvVars: []string{"GREED_IGNORE_CACHE"},
+						Sources: cli.EnvVars("GREED_IGNORE_CACHE"),
 						Usage:   "Ignore cache and fetch latest entries",
+						Value:   false,
+					},
+					&cli.BoolFlag{
+						Name:    "random",
+						Aliases: []string{"r"},
+						Sources: cli.EnvVars("GREED_RANDOM"),
+						Usage:   "Display random entries",
 						Value:   false,
 					},
 				},
@@ -105,29 +116,38 @@ func main() {
 		},
 	}
 
-	err := app.Run(os.Args)
+	err := app.Run(context.Background(), os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run(c *cli.Context) error {
-	username := c.String("username")
-	password := c.String("password")
+func listEntries(ctx context.Context, cmd *cli.Command) error {
+	username := cmd.String("username")
+	password := cmd.String("password")
 
 	if username == "" || password == "" {
 		return fmt.Errorf("username and password are required")
 	}
 
-	fetchLimit := c.Int("fetch-limit")
-	displayLimit := c.Int("display-limit")
-	cacheDir := c.String("cache-dir")
-	showProgress := c.Bool("show-progress")
-	ignoreCache := c.Bool("ignore-cache")
+	fetchLimit := cmd.Int("fetch-limit")
+	if fetchLimit <= 0 {
+		return fmt.Errorf("fetch-limit must be greater than 0")
+	}
+
+	displayLimit := cmd.Int("display-limit")
+	if displayLimit <= 0 {
+		return fmt.Errorf("display-limit must be greater than 0")
+	}
+
+	cacheDir := cmd.String("cache-dir")
+	showProgress := cmd.Bool("show-progress")
+	ignoreCache := cmd.Bool("ignore-cache")
+	cacheDuration := cmd.Duration("cache-expires-after")
 
 	client := feedbin.NewClient(username, password, fetchLimit)
 
-	cache, err := cache.New(cacheDir)
+	cache, err := cache.New(cacheDir, cacheDuration)
 	if err != nil {
 		return fmt.Errorf("failed to create cache: %w", err)
 	}
@@ -137,26 +157,31 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	randomEntries := c.Bool("random")
+	randomEntries := cmd.Bool("random")
 	ui.DisplayEntries(entries, displayLimit, randomEntries)
 	return nil
 }
 
-func fetchAndUpdateCache(c *cli.Context) error {
-	username := c.String("username")
-	password := c.String("password")
+func fetchAndUpdateCache(ctx context.Context, cmd *cli.Command) error {
+	username := cmd.String("username")
+	password := cmd.String("password")
 
 	if username == "" || password == "" {
 		return fmt.Errorf("username and password are required")
 	}
 
-	fetchLimit := c.Int("fetch-limit")
-	cacheDir := c.String("cache-dir")
-	showProgress := c.Bool("show-progress")
+	fetchLimit := cmd.Int("fetch-limit")
+	if fetchLimit <= 0 {
+		return fmt.Errorf("fetch-limit must be greater than 0")
+	}
+
+	cacheDir := cmd.String("cache-dir")
+	showProgress := cmd.Bool("show-progress")
+	cacheDuration := cmd.Duration("cache-expires-after")
 
 	client := feedbin.NewClient(username, password, fetchLimit)
 
-	cache, err := cache.New(cacheDir)
+	cache, err := cache.New(cacheDir, cacheDuration)
 	if err != nil {
 		return fmt.Errorf("failed to create cache: %w", err)
 	}
@@ -170,7 +195,7 @@ func fetchAndUpdateCache(c *cli.Context) error {
 	return nil
 }
 
-func printVersion(c *cli.Context) error {
+func printVersion(ctx context.Context, cmd *cli.Command) error {
 	fmt.Printf("Greed version %s\n", Version)
 	fmt.Printf("Commit: %s\n", Commit)
 	fmt.Printf("Built: %s\n", Date)
